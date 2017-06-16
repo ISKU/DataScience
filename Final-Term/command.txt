@@ -1,0 +1,84 @@
+bin/hdfs namenode -format
+sbin/start-dfs.sh
+sbin/start-yarn.sh
+
+
+create table temp (RENT_STATION int, RENT_DATE string, RETURN_STATION int, RETURN_DATE string) row format delimited fields terminated by ',';
+load data local inpath '/home/kmh1/tashu.csv' overwrite into table temp;
+create table tashu (RENT_STATION int, RENT_DATE timestamp, RETURN_STATION int, RETURN_DATE timestamp);
+insert into table tashu
+ select RETURN_STATION
+ , from_unixtime(unix_timestamp(RENT_DATE, 'yyyyMMddHHmmss'))
+ , RETURN_STATION
+ , from_unixtime(unix_timestamp(RETURN_DATE, 'yyyyMMddHHmmss')) from temp;
+
+ 
+select RENT_STATION, count(*) as cnt
+  from tashu group by RENT_STATION order by cnt desc limit 5;
+  from tashu group by RENT_STATION order by cnt asc limit 5;
+
+  
+select RENT_STATION, RETURN_STATION, count(*) as cnt
+ from tashu group by RENT_STATION, RETURN_STATION order by cnt desc;
+ 
+
+textFile = sc.textFile("README.md")
+textFile.count()  # Number of items in this RDD
+textFile.first()  # First item in this RDD
+linesWithSpark = textFile.filter(lambda line: "Spark" in line)
+textFile.filter(lambda line: "Spark" in line).count()  # How many lines contain "Spark"?
+
+
+from pyspark.ml.clustering import KMeans
+dataset = spark.read.format("libsvm").load("fitbit.txt")  # Loads data.
+
+kmeans = KMeans().setK(2).setSeed(1)
+model = kmeans.fit(dataset)  # Trains a k-means model.
+
+# Evaluate clustering by computing Within Set Sum of Squared Errors.
+wssse = model.computeCost(dataset)
+print("Within Set Sum of Squared Errors = " + str(wssse))
+
+# Shows the result.
+centers = model.clusterCenters()
+print("Cluster Centers: ")
+for center in centers:
+    print(center)
+
+
+
+from pyspark.sql.functions import mean, min, max
+
+df_sleep = spark.read.json('/home/kmh1/sokulee/*/*_sleep.json')
+df_steps = spark.read.json('/home/kmh1/sokulee/*/*_steps.json')
+df_heart = spark.read.json('/home/kmh1/sokulee/*/*_heart.json')
+
+total_avg_sleep = df_sleep['summary']['totalMinutesAsleep']
+total_timeinbed = df_sleep['summary']['totalTimeInBed']
+
+df_sleep.select(mean(total_avg_sleep), min(total_avg_sleep), max(total_avg_sleep)).show()
+
+
+
+
+export JAVA_HOME=/usr/lib/jvm/java-7-oracle
+export PATH=${JAVA_HOME}/bin:${PATH}
+export HADOOP_CLASSPATH=${JAVA_HOME}/lib/tools.jar
+
+bin/hadoop com.sun.tools.javac.Main WordCount.java
+jar cf wc.jar WordCount*.class
+
+bin/hdfs dfs -mkdir /user/kmh1/wordcount/input
+
+bin/hdfs dfs -put ./file01 /user/kmh1/wordcount/input/
+bin/hadoop fs -cat /user/kmh1/wordcount/input/file01
+
+bin/hadoop jar wc.jar WordCount /user/kmh1/wordcount/input /user/kmh1/wordcount/output
+bin/hadoop fs -cat /user/kmh1/wordcount/output/part-r-00000
+
+bin/hadoop dfs -put patterns.txt /user/kmh1/wordcount/input
+bin/hadoop fs -cat /user/kmh1/wordcount/patters.txt
+
+bin/haddop jar wc2.jar WordCount2 -Dwordcount.case.sensitive=true /user/kmh1/wordcount/input /user/kmh1/wordcount/output
+
+
