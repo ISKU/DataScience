@@ -7,3 +7,4 @@
 4. Fitbit Data Analysis
 5. Prediction
 6. Mid-Term
+7. Final-Term
